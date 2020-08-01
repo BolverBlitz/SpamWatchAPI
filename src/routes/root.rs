@@ -27,7 +27,7 @@ pub fn info() -> HttpResponse {
         &env!("CARGO_PKG_AUTHORS"),
         &env!("CARGO_PKG_DESCRIPTION"),
         safe_href("GitHub", &env!("CARGO_PKG_REPOSITORY")),
-        safe_href("Channel", "https://t.me/SpamWatch"),
+        safe_href("Channel", "https://t.me/BolverBlitzBots"),
         safe_href("Documentation", "https://docs.spamwat.ch")
     );
     HttpResponse::Ok().content_type("text/html").body(body)
