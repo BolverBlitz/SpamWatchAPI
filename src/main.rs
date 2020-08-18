@@ -1,11 +1,10 @@
-#[macro_use]
 extern crate postgres;
 #[macro_use]
 extern crate slog;
 
 use std::process::exit;
 
-use actix_web::{App, guard, HttpServer, web};
+use actix_web::{App, HttpServer, web};
 
 use crate::database::Database;
 use crate::errors::UserError;
@@ -71,6 +70,10 @@ fn run() -> Result<i32, postgres::Error> {
                 web::resource("/tokens/{id}")
                     .route(web::get().to(routes::tokens::get_token))
                     .route(web::delete().to(routes::tokens::delete_token)),
+            )
+            .service(
+                web::resource("/tokens/userid/{uid}")
+                    .route(web::get().to(routes::tokens::get_token_by_userid))
             )
             .service(
                 web::resource("/banlist")

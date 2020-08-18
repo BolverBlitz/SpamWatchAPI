@@ -1,11 +1,9 @@
 use actix_web::{HttpRequest, HttpResponse, Result, web};
 use serde::Deserialize;
-use serde_json::Value;
 
-use crate::database::{Database, Token};
+use crate::database::Database;
 use crate::errors::UserError;
 use crate::guards::{Permission, TokenGuard};
-use crate::guards::Permission::User;
 use crate::utils;
 
 #[derive(Debug, Deserialize)]
@@ -73,6 +71,29 @@ pub fn get_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
     }
 }
 
+pub fn get_token_by_userid(req: HttpRequest) -> Result<HttpResponse, UserError> {
+    let guard = TokenGuard::new(utils::get_auth_token(&req)?)?;
+
+    let mut db = Database::new()?;
+    let uid = req.match_info().get("uid").unwrap();
+
+    if guard.root() {
+        let uid: i64 = uid.parse().map_err(|e| {
+            error!(utils::LOGGER, "{}", e);
+            UserError::BadRequest
+        })?;
+        let tokens = db.get_token_by_userid(uid)?;
+        let tokens_json = serde_json::to_value(tokens).map_err(|e| {
+            error!(utils::LOGGER, "{}", e);
+            UserError::Internal
+        })?;
+
+        Ok(HttpResponse::Ok().json(tokens_json))
+    } else {
+        Err(UserError::Unauthorized)
+    }
+}
+
 pub fn delete_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
     let guard = TokenGuard::new(utils::get_auth_token(&req)?)?;
 
@@ -83,7 +104,7 @@ pub fn delete_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
             UserError::BadRequest
         })?;
         match db.get_token_by_id(token_id)? {
-            Some(token) => {
+            Some(_token) => {
                 db.revoke_token_by_id(token_id)?;
                 Ok(HttpResponse::NoContent().body(""))
             }

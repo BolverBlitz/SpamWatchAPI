@@ -1,10 +1,9 @@
-use actix_web::{HttpResponse, HttpRequest};
-use serde_json::{json, Value};
+use actix_web::{HttpRequest, HttpResponse};
+use serde_json::json;
 
-use crate::{settings, utils};
-use crate::errors::UserError;
-use crate::guards::TokenGuard;
+use crate::settings;
 use crate::database::Database;
+use crate::errors::UserError;
 
 fn safe_href(name: &str, url: &str) -> String {
     format!(r#"<a rel="noopener" target="_blank" href="{}" class="white-no-dec-link">{}</a>"#, url, name)
@@ -20,7 +19,7 @@ pub fn info() -> HttpResponse {
         "
         <style>* {{font-family: monospace;}}</style>
         {}
-        {} v{} by {}<br>{}<br><br>{}<br>{}<br>{}",
+        {} v{} by {}<br>{}<br><br>{}<br>{}<br>{}<br>{}",
         staging_prefix,
         &env!("CARGO_PKG_NAME"),
         &env!("CARGO_PKG_VERSION"),
@@ -29,6 +28,7 @@ pub fn info() -> HttpResponse {
         safe_href("GitHub", &env!("CARGO_PKG_REPOSITORY")),
         safe_href("Channel", "https://t.me/BolverBlitzBots"),
         safe_href("Documentation", "https://docs.spamwat.ch")
+        safe_href("Get an access token", "https://t.me/JoinProtectionBot?start=token")
     );
     HttpResponse::Ok().content_type("text/html").body(body)
 }
@@ -42,7 +42,7 @@ pub fn version() -> HttpResponse {
     }))
 }
 
-pub fn stats(req: HttpRequest) -> Result<HttpResponse, UserError> {
+pub fn stats(_req: HttpRequest) -> Result<HttpResponse, UserError> {
     let mut db = Database::new()?;
     let total_ban_count = db.get_total_ban_count()?;
     let stats = json!({
