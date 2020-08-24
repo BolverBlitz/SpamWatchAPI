@@ -41,7 +41,7 @@ pub fn post_tokens(
             None => Err(UserError::NotFound),
         }
     } else {
-        Err(UserError::Unauthorized)
+        Err(UserError::Forbidden)
     }
 }
 
@@ -57,16 +57,15 @@ pub fn get_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
         }
     } else {
         if guard.root() {
-            let token_id: i32 = _id.parse().map_err(|e| {
-                error!(utils::LOGGER, "{}", e);
-                UserError::BadRequest
+            let token_id: i32 = _id.parse().map_err(|_| {
+                UserError::BadRequest("could not convert token id to integer")
             })?;
             match db.get_token_by_id(token_id)? {
                 Some(token) => Ok(HttpResponse::Ok().json(token.json()?)),
                 None => Err(UserError::NotFound),
             }
         } else {
-            Err(UserError::Unauthorized)
+            Err(UserError::Forbidden)
         }
     }
 }
@@ -78,9 +77,8 @@ pub fn get_token_by_userid(req: HttpRequest) -> Result<HttpResponse, UserError> 
     let uid = req.match_info().get("uid").unwrap();
 
     if guard.root() {
-        let uid: i64 = uid.parse().map_err(|e| {
-            error!(utils::LOGGER, "{}", e);
-            UserError::BadRequest
+        let uid: i64 = uid.parse().map_err(|_| {
+            UserError::BadRequest("could not convert user id to integer")
         })?;
         let tokens = db.get_token_by_userid(uid)?;
         let tokens_json = serde_json::to_value(tokens).map_err(|e| {
@@ -90,7 +88,7 @@ pub fn get_token_by_userid(req: HttpRequest) -> Result<HttpResponse, UserError> 
 
         Ok(HttpResponse::Ok().json(tokens_json))
     } else {
-        Err(UserError::Unauthorized)
+        Err(UserError::Forbidden)
     }
 }
 
@@ -99,9 +97,8 @@ pub fn delete_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
 
     if guard.root() {
         let mut db = Database::new()?;
-        let token_id: i32 = req.match_info().get("id").unwrap().parse().map_err(|e| {
-            error!(utils::LOGGER, "{}", e);
-            UserError::BadRequest
+        let token_id: i32 = req.match_info().get("id").unwrap().parse().map_err(|_| {
+            UserError::BadRequest("could not convert token id to integer")
         })?;
         match db.get_token_by_id(token_id)? {
             Some(_token) => {
@@ -111,6 +108,6 @@ pub fn delete_token(req: HttpRequest) -> Result<HttpResponse, UserError> {
             None => Err(UserError::NotFound),
         }
     } else {
-        Err(UserError::Unauthorized)
+        Err(UserError::Forbidden)
     }
 }

@@ -48,7 +48,7 @@ pub fn post_bans(
                            guard.token.id,
                            &ban.message)?;
             } else {
-                return Err(UserError::BadRequest);
+                return Err(UserError::BadRequest("ban reason can not be empty"));
             }
         }
         Ok(HttpResponse::NoContent().body(""))
@@ -59,9 +59,8 @@ pub fn post_bans(
 
 pub fn get_ban(req: HttpRequest) -> Result<HttpResponse, UserError> {
     let _guard = TokenGuard::new(utils::get_auth_token(&req)?)?;
-    let user_id: i64 = req.match_info().get("id").unwrap().parse().map_err(|e| {
-        error!(utils::LOGGER, "{}", e);
-        UserError::BadRequest
+    let user_id: i64 = req.match_info().get("id").unwrap().parse().map_err(|_| {
+        UserError::BadRequest("could not convert user id to integer")
     })?;
     let mut db = Database::new()?;
     match db.get_ban(user_id)? {
@@ -73,9 +72,8 @@ pub fn get_ban(req: HttpRequest) -> Result<HttpResponse, UserError> {
 pub fn delete_ban(req: HttpRequest) -> Result<HttpResponse, UserError> {
     let guard = TokenGuard::new(utils::get_auth_token(&req)?)?;
     if guard.admin() {
-        let user_id: i64 = req.match_info().get("id").unwrap().parse().map_err(|e| {
-            error!(utils::LOGGER, "{}", e);
-            UserError::BadRequest
+        let user_id: i64 = req.match_info().get("id").unwrap().parse().map_err(|_| {
+            UserError::BadRequest("could not convert id to integer")
         })?;
 
         let mut db = Database::new()?;
